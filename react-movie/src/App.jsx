@@ -7,6 +7,7 @@ import {getTrendingMovies, updateSearchCount} from "./appwrite.js";
 
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
+
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 const API_OPTIONS = {
@@ -20,8 +21,10 @@ const API_OPTIONS = {
 export default function App() {
     const [searchTerm, setSearchTerm] = useState('')
     const [errorMessage, setErrorMessage] = useState('');
+
     const [movieList, setMovieList] = useState([]);
     const [trendingMovies, setTrendingMovies] = useState([])
+
     const [isLoading, setIsLoading] = useState(false);
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
 
@@ -83,6 +86,7 @@ export default function App() {
     return (
         <main>
             <div className="pattern"/>
+
             <div className="wrapper">
                 <header>
                     <img src="./hero.png" alt="hero" />
@@ -91,12 +95,13 @@ export default function App() {
                 </header>
 
                 {trendingMovies.length > 0 && (
-                    <section className="trending-movies">
+                    <section className="trending">
                         <h2>Trending Now</h2>
                         <ul>
                             {trendingMovies.map((movie, index) => (
                                 <li key={movie.$id}>
                                     <p>{index + 1}</p>
+                                    <img src={movie.poster_url} alt={movie.title} />
                                 </li>
                             ))}
                         </ul>
@@ -105,9 +110,9 @@ export default function App() {
 
                 <section className="all-movies">
                     <h2 className=" text-center">All Movies</h2>
+
                     {isLoading ? (
                         <Spinner />
-
                     ): errorMessage ? (
                         <p className='text-red-500'>{errorMessage}</p>
                     ) : (
@@ -119,10 +124,7 @@ export default function App() {
                     ) }
 
                 </section>
-
             </div>
-
-
         </main>
-    );
+    )
 }
