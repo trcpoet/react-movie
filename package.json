@@ -4,6 +4,7 @@
     "tailwindcss": "^4.1.14"
   },
   "dependencies": {
+    "appwrite": "^21.2.1",
     "react-use": "^17.6.0"
   }
 }

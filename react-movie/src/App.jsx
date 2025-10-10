@@ -4,11 +4,11 @@ import Spinner from "./components /Spinner.jsx";
 import MovieCard from "./components /MovieCard.jsx";
 import {useDebounce} from "react-use";
 import {getTrendingMovies, updateSearchCount} from "./appwrite.js";
-
+import { account, ID } from './lib/appwrite';
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0YjU5MTQ3M2Y2OWZkZjAyNTdlZTEzNmUxNjk1MGFhOSIsIm5iZiI6MTc1OTY2MDM2OC4zNjksInN1YiI6IjY4ZTI0OTUwYmVhZDI1ODIwYzljYThhNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.cWl2dzF_Fh5dQAXM64kurx3SWiJZJ7lnYi3y_kEdhIE";
 
 const API_OPTIONS = {
     method: "GET",
@@ -27,6 +27,20 @@ export default function App() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+
+
+    const [loggedInUser, setLoggedInUser] = useState(null);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+
+    async function login(email, password) {
+        await account.createEmailPasswordSession({
+            email,
+            password
+        });
+        setLoggedInUser(await account.get());
+    }
 
     useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm])
 
@@ -84,47 +98,55 @@ export default function App() {
     }, [])
 
     return (
-        <main>
-            <div className="pattern"/>
-
-            <div className="wrapper">
-                <header>
-                    <img src="./hero.png" alt="hero" />
-                    <h1>Find <span className="text-gradient">Movies</span> You'll Enjoy Without The Hassle!</h1>
-                    <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
-                </header>
-
-                {trendingMovies.length > 0 && (
-                    <section className="trending">
-                        <h2>Trending Now</h2>
-                        <ul>
-                            {trendingMovies.map((movie, index) => (
-                                <li key={movie.$id}>
-                                    <p>{index + 1}</p>
-                                    <img src={movie.poster_url} alt={movie.title} />
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                )}
-
-                <section className="all-movies">
-                    <h2 className=" text-center">All Movies</h2>
-
-                    {isLoading ? (
-                        <Spinner />
-                    ): errorMessage ? (
-                        <p className='text-red-500'>{errorMessage}</p>
-                    ) : (
-                        <ul>
-                            {movieList.map((movie) => (
-                                <MovieCard  key={movie.id} movie={movie}/>
-                            ))}
-                        </ul>
-                    ) }
-
-                </section>
+        <>
+            <div>
+                <p>{loggedInUser ? `Logged in as ${loggedInUser.name}` : 'Not logged in'}</p>
+                <form>
+                    {/* inputs + buttons as you had */}
+                </form>
             </div>
-        </main>
+
+            <main>
+                <div className="pattern" />
+                <div className="wrapper">
+                    <header>
+                        <img src="./hero.png" alt="hero" />
+                        <h1>
+                            Find <span className="text-gradient">Movies</span> You'll Enjoy Without The Hassle!
+                        </h1>
+                        <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+                    </header>
+
+                    {trendingMovies.length > 0 && (
+                        <section className="trending">
+                            <h2>Trending Now</h2>
+                            <ul>
+                                {trendingMovies.map((movie, index) => (
+                                    <li key={movie.$id}>
+                                        <p>{index + 1}</p>
+                                        <img src={movie.poster_url} alt={movie.title ?? 'Trending movie'} />
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+
+                    <section className="all-movies">
+                        <h2 className="text-center">All Movies</h2>
+                        {isLoading ? (
+                            <Spinner />
+                        ) : errorMessage ? (
+                            <p className="text-red-500">{errorMessage}</p>
+                        ) : (
+                            <ul>
+                                {movieList.map((movie) => (
+                                    <MovieCard key={movie.id} movie={movie} />
+                                ))}
+                            </ul>
+                        )}
+                    </section>
+                </div>
+            </main>
+        </>
     )
 }
