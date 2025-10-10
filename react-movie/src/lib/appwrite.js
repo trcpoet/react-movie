@@ -1,7 +1,7 @@
 import { Client, Databases, Query, ID, Account } from 'appwrite';
 
 // Fetch environment variables with checks
-const appwriteUrl = import.meta.env.VITE_APPWRITE_URL;
+const appwriteUrl = import.meta.env.VITE_APPWRITE_ENDPOINT; // <-- CORRECTED
 const appwriteProjectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const collectionId = import.meta.env.VITE_APPWRITE_COLLECTION_ID;
