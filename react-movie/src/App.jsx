@@ -3,8 +3,7 @@ import Search from "./components /Search.jsx";
 import Spinner from "./components /Spinner.jsx";
 import MovieCard from "./components /MovieCard.jsx";
 import {useDebounce} from "react-use";
-import {getTrendingMovies, updateSearchCount} from "./appwrite.js";
-import { account, ID } from './lib/appwrite';
+import {getTrendingMovies, updateSearchCount, account, ID} from "./lib/appwrite.js";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 
@@ -34,12 +33,32 @@ export default function App() {
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
 
-    async function login(email, password) {
-        await account.createEmailPasswordSession({
-            email,
-            password
-        });
-        setLoggedInUser(await account.get());
+    useEffect(() => {
+        const checkUser = async () => {
+            try {
+                const user = await account.get();
+                setLoggedInUser(user);
+            } catch (err) {
+                // Not logged in
+            }
+        };
+        checkUser();
+    }, []);
+
+    async function login(e) {
+        e.preventDefault();
+        try {
+            await account.createEmailPasswordSession(email, password);
+            setLoggedInUser(await account.get());
+        } catch (error) {
+            console.error("Failed to login:", error);
+            setErrorMessage("Failed to login. Please check your credentials.");
+        }
+    }
+
+    async function logout() {
+        await account.deleteSession('current');
+        setLoggedInUser(null);
     }
 
     useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm])
@@ -54,11 +73,9 @@ export default function App() {
 
             const response = await fetch(endpoint, API_OPTIONS);
 
-            if(!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}. Failed to fetch movies.`);
-            }
-            const data = await response.json();
+            if(!response.ok) throw new Error(`HTTP error! Status: ${response.status}. Failed to fetch movies.`);
 
+            const data = await response.json();
             if(data.Response === 'False') {
                 setErrorMessage(data.error || 'Failed to fetch movies');
                 setMovieList([])
@@ -67,12 +84,14 @@ export default function App() {
 
             setMovieList(data.results || []);
 
+            // Update search count if it was a search query with results
             if(query && data.results.length > 0) {
                 await updateSearchCount(query, data.results[0]);
+                loadTrendingMovies()
             }
 
         } catch (error) {
-            console.log(`Error fetching movies:  ${error}`);
+            console.log(`Error fetching movies: `, error);
             setErrorMessage('Error fetching movies');
         } finally {
             setIsLoading(false);
@@ -84,26 +103,37 @@ export default function App() {
             const movies = await getTrendingMovies();
             setTrendingMovies(movies)
         } catch (error) {
-            console.log(`Error fetching trending movies: ${error}`);
+            console.error(`Error fetching trending movies: ${error}`);
         }
     }
 
     useEffect(() => {
-        fetchMovies(debouncedSearchTerm)
+        fetchMovies(debouncedSearchTerm);
     }, [debouncedSearchTerm]);
     // Empty dependency array means this effect runs once on mount/start
 
     useEffect(() => {
-        loadTrendingMovies()
-    }, [])
+        loadTrendingMovies();
+    }, []);
 
     return (
         <>
-            <div>
-                <p>{loggedInUser ? `Logged in as ${loggedInUser.name}` : 'Not logged in'}</p>
-                <form>
-                    {/* inputs + buttons as you had */}
-                </form>
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+                {loggedInUser ? (
+                    <div>
+                        <p>Welcome, {loggedInUser.name}!</p>
+                        <button onClick={logout}>Logout</button>
+                    </div>
+                ) : (
+                    <div>
+                        <p>Please log in to continue.</p>
+                        <form onSubmit={login}>
+                            <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+                            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+                            <button type="submit">Login</button>
+                        </form>
+                    </div>
+                )}
             </div>
 
             <main>
