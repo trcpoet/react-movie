@@ -3,11 +3,9 @@ import Search from "./components /Search.jsx";
 import Spinner from "./components /Spinner.jsx";
 import MovieCard from "./components /MovieCard.jsx";
 import { useDebounce } from "react-use";
-// UPDATED: All Appwrite imports now come from our single lib file
 import { getTrendingMovies, updateSearchCount, account, incrementMovieClickCount } from "./lib/appwrite.js";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
-// CORRECT: Using the environment variable for the API key is the right approach
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 const API_OPTIONS = {
@@ -19,52 +17,40 @@ const API_OPTIONS = {
 };
 
 export default function App() {
-    // State from your original code
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-
     const [movieList, setMovieList] = useState([]);
     const [errorMessage, setErrorMessage] = useState('');
-
     const [isLoading, setIsLoading] = useState(false);
-
     const [trendingMovies, setTrendingMovies] = useState([]);
-
-    // --- NEW: Authentication State from Tutor's Code ---
     const [loggedInUser, setLoggedInUser] = useState(null);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [name, setName] = useState(''); // This is for registration, can be removed if not needed
 
-    // --- NEW: Check for a logged-in user when the app loads ---
     useEffect(() => {
         const checkUserSession = async () => {
             try {
                 const user = await account.get();
                 setLoggedInUser(user);
             } catch (error) {
-                // No user session found, which is normal on first load
                 setLoggedInUser(null);
             }
         };
         checkUserSession();
     }, []);
 
-    // --- NEW: Login Function ---
     async function login(e) {
         e.preventDefault();
         try {
             await account.createEmailPasswordSession(email, password);
-            const user = await account.get();
-            setLoggedInUser(user);
-            setErrorMessage(''); // Clear any previous errors
+            setLoggedInUser(await account.get());
+            setErrorMessage('');
         } catch (error) {
             console.error("Failed to login:", error);
             setErrorMessage("Failed to login. Please check your credentials.");
         }
     }
 
-    // --- NEW: Logout Function ---
     async function logout() {
         try {
             await account.deleteSession('current');
@@ -74,7 +60,6 @@ export default function App() {
         }
     }
 
-    // Debounce search term (no changes here)
     useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
 
     const fetchMovies = async (query = '') => {
@@ -96,12 +81,10 @@ export default function App() {
             }
 
             setMovieList(data.results || []);
-            // updateSearchCount();
 
-            // UPDATE: When a user searches, update the search count AND refresh trending
             if (query && data.results.length > 0) {
                 await updateSearchCount(query, data.results[0]);
-                loadTrendingMovies(); // Refresh trending movies list
+                loadTrendingMovies();
             }
         } catch (error) {
             console.error(`Error fetching movies:`, error);
@@ -128,22 +111,21 @@ export default function App() {
         loadTrendingMovies();
     }, []);
 
-
-    // Add this function inside your App component in App.jsx
+    const handleMovieClick = async (tmdbMovieId) => {
+        await incrementMovieClickCount(tmdbMovieId);
+        loadTrendingMovies();
+    };
 
     const handleTrendingClick = async (movieId) => {
-        // First, log the click in your database
         await handleMovieClick(movieId);
-
-        // Then, display the single movie's details
         setIsLoading(true);
-        setSearchTerm(''); // Clear search term to reset the view
-        setMovieList([]); // Clear the previous list of movies
+        setSearchTerm('');
+        setMovieList([]);
         try {
             const response = await fetch(`${API_BASE_URL}/movie/${movieId}`, API_OPTIONS);
             if (!response.ok) throw new Error('Failed to fetch movie details.');
             const movieData = await response.json();
-            setMovieList([movieData]); // Display just the single clicked movie
+            setMovieList([movieData]);
         } catch (error) {
             console.error(error);
             setErrorMessage('Could not load movie details.');
@@ -151,38 +133,9 @@ export default function App() {
             setIsLoading(false);
         }
     };
-    const handleMovieClick = async (tmdbMovieId) => {
-        await incrementMovieClickCount(tmdbMovieId);
-        // After incrementing, refresh the trending list to show the change
-        loadTrendingMovies();
-    };
-
-    // const handleTrendingClick = async (movieId) => {
-    //     // Increment the count when a trending movie is clicked
-    //     await handleMovieClick(movieId);
-    //
-    //     setIsLoading(true);
-    //     setSearchTerm('');
-    //     setMovieList([]);
-    //     try {
-    //         const response = await fetch(`${API_BASE_URL}/movie/${movieId}`, API_OPTIONS);
-    //         if (!response.ok) throw new Error('Failed to fetch movie details.');
-    //         const movieData = await response.json();
-    //         setMovieList([movieData]);
-    //     } catch (error) {
-    //         console.error(error);
-    //         setErrorMessage('Could not load movie details.');
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
-
-
-
 
     return (
         <>
-            {/* --- NEW: Login/Logout UI --- */}
             <div className="auth-section">
                 {loggedInUser ? (
                     <div className="user-info">
@@ -214,14 +167,13 @@ export default function App() {
                                 {trendingMovies.map((movie, index) => (
                                     <li key={movie.$id} onClick={() => handleTrendingClick(movie.movie_id)}>
                                         <p>{index + 1}</p>
-                                        <img src={movie.poster_url} alt={movie.title}  />
+                                        <img src={movie.poster_url} alt={movie.title} />
                                     </li>
                                 ))}
                             </ul>
                         </section>
                     )}
 
-                    {/* All movies section (no changes) */}
                     <section className="all-movies pt-8">
                         <h2 className="pt-4 sm:pt-6 lg:pt-10 mx-auto w-fittext-center text-center">All Movies</h2>
                         {isLoading ? (
@@ -231,7 +183,7 @@ export default function App() {
                         ) : (
                             <ul>
                                 {movieList.map((movie) => (
-                                    <MovieCard key={movie.id} movie={movie} onClick={handleMovieClick}/>
+                                    <MovieCard key={movie.id} movie={movie} onClick={handleMovieClick} />
                                 ))}
                             </ul>
                         )}
