@@ -61,11 +61,11 @@
         @apply mt-20;
 
         & ul {
-            @apply flex flex-row overflow-y-auto gap-5 -mt-10 w-full hide-scrollbar;
+            @apply flex flex-row overflow-x-auto gap-5 -mt-10 w-full hide-scrollbar py-4; ;
         }
 
         & ul li {
-            @apply min-w-[230px] flex flex-row items-center;
+            @apply min-w-[230px] flex flex-row items-center cursor-pointer;;
         }
 
         & ul li p {
@@ -73,7 +73,10 @@
         }
 
         & ul li img {
-            @apply w-[127px] h-[163px] rounded-lg object-cover -ml-3.5;
+            @apply w-[150px] h-[200px] rounded-lg object-cover -ml-4 shadow-lg transition-transform duration-300;
+        }
+        & ul li:hover img {
+            @apply transform scale-105;
         }
     }
 
@@ -103,6 +106,9 @@
 
     .movie-card {
         @apply bg-dark-100 p-5 rounded-2xl shadow-inner shadow-light-100/10;
+
+        @apply transition-transform duration-300 ease-in-out;
+
 
         & img {
             @apply rounded-lg h-auto w-full;
@@ -140,6 +146,10 @@
             @apply text-gray-100 font-medium text-base;
         }
     }
+}
+
+.movie-card:hover {
+    @apply transform scale-105 z-10;
 }
 
 @utility text-gradient {

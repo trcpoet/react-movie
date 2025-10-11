@@ -4,7 +4,7 @@ import Spinner from "./components /Spinner.jsx";
 import MovieCard from "./components /MovieCard.jsx";
 import { useDebounce } from "react-use";
 // UPDATED: All Appwrite imports now come from our single lib file
-import { getTrendingMovies, updateSearchCount, account } from "./lib/appwrite.js";
+import { getTrendingMovies, updateSearchCount, account, incrementMovieClickCount } from "./lib/appwrite.js";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 // CORRECT: Using the environment variable for the API key is the right approach
@@ -132,14 +132,18 @@ export default function App() {
     // Add this function inside your App component in App.jsx
 
     const handleTrendingClick = async (movieId) => {
+        // First, log the click in your database
+        await handleMovieClick(movieId);
+
+        // Then, display the single movie's details
         setIsLoading(true);
-        setSearchTerm(''); // Clear search term to hide other movies
-        setMovieList([]); // Clear the main movie list
+        setSearchTerm(''); // Clear search term to reset the view
+        setMovieList([]); // Clear the previous list of movies
         try {
             const response = await fetch(`${API_BASE_URL}/movie/${movieId}`, API_OPTIONS);
             if (!response.ok) throw new Error('Failed to fetch movie details.');
             const movieData = await response.json();
-            setMovieList([movieData]); // Display the single clicked movie
+            setMovieList([movieData]); // Display just the single clicked movie
         } catch (error) {
             console.error(error);
             setErrorMessage('Could not load movie details.');
@@ -147,6 +151,34 @@ export default function App() {
             setIsLoading(false);
         }
     };
+    const handleMovieClick = async (tmdbMovieId) => {
+        await incrementMovieClickCount(tmdbMovieId);
+        // After incrementing, refresh the trending list to show the change
+        loadTrendingMovies();
+    };
+
+    // const handleTrendingClick = async (movieId) => {
+    //     // Increment the count when a trending movie is clicked
+    //     await handleMovieClick(movieId);
+    //
+    //     setIsLoading(true);
+    //     setSearchTerm('');
+    //     setMovieList([]);
+    //     try {
+    //         const response = await fetch(`${API_BASE_URL}/movie/${movieId}`, API_OPTIONS);
+    //         if (!response.ok) throw new Error('Failed to fetch movie details.');
+    //         const movieData = await response.json();
+    //         setMovieList([movieData]);
+    //     } catch (error) {
+    //         console.error(error);
+    //         setErrorMessage('Could not load movie details.');
+    //     } finally {
+    //         setIsLoading(false);
+    //     }
+    // };
+
+
+
 
     return (
         <>
@@ -199,7 +231,7 @@ export default function App() {
                         ) : (
                             <ul>
                                 {movieList.map((movie) => (
-                                    <MovieCard key={movie.id} movie={movie} />
+                                    <MovieCard key={movie.id} movie={movie} onClick={handleMovieClick}/>
                                 ))}
                             </ul>
                         )}

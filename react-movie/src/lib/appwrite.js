@@ -69,3 +69,25 @@ export const getTrendingMovies = async () => {
         return []; // Return an empty array on error
     }
 };
+
+export const incrementMovieClickCount = async (tmdbMovieId) => {
+    try {
+        // 1. Find the document in our DB that matches the movie ID
+        const response = await databases.listDocuments(databaseId, collectionId, [
+            Query.equal('movie_id', tmdbMovieId)
+        ]);
+
+        // 2. If it exists, update its count
+        if (response.documents.length > 0) {
+            const docToUpdate = response.documents[0];
+            await databases.updateDocument(databaseId, collectionId, docToUpdate.$id, {
+                count: docToUpdate.count + 1
+            });
+        }
+        // If the movie isn't in our database yet, we'll do nothing.
+        // It will be added the next time it appears in a search result.
+
+    } catch (error) {
+        console.error('Error incrementing movie click count:', error);
+    }
+};
