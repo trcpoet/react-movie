@@ -1,8 +1,5 @@
 import { Client, Databases, Query, ID, Account } from 'appwrite';
 
-
-
-
 // Fetch environment variables with checks
 const appwriteUrl = import.meta.env.VITE_APPWRITE_ENDPOINT; // <-- CORRECTED
 const appwriteProjectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
@@ -74,7 +71,10 @@ export const incrementMovieClickCount = async (tmdbMovieId) => {
     try {
         // 1. Find the document in our DB that matches the movie ID
         const response = await databases.listDocuments(databaseId, collectionId, [
-            Query.equal('movie_id', tmdbMovieId)
+            Query.limit(5),
+            Query.equal('movie_id', tmdbMovieId),
+            Query.orderDesc('count'),
+
         ]);
 
         // 2. If it exists, update its count
