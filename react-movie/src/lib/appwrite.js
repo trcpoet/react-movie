@@ -1,5 +1,8 @@
 import { Client, Databases, Query, ID, Account } from 'appwrite';
 
+
+
+
 // Fetch environment variables with checks
 const appwriteUrl = import.meta.env.VITE_APPWRITE_ENDPOINT; // <-- CORRECTED
 const appwriteProjectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
@@ -11,8 +14,7 @@ if (!appwriteUrl || !appwriteProjectId || !databaseId || !collectionId) {
 }
 
 // Initialize the Appwrite client
-const client = new Client();
-client
+const client = new Client()
     .setEndpoint(appwriteUrl)
     .setProject(appwriteProjectId);
 
@@ -37,7 +39,7 @@ export const updateSearchCount = async (searchTerm, movie) => {
             const doc = result.documents[0];
             await databases.updateDocument(databaseId, collectionId, doc.$id, {
                 count: doc.count + 1,
-            });
+            })
         } else {
             // If term doesn't exist, create a new document
             await databases.createDocument(databaseId, collectionId, ID.unique(), {
