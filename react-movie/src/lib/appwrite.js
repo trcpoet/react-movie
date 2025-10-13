@@ -30,7 +30,9 @@ export const updateSearchCount = async (searchTerm, movie) => {
             });
         } else {
             await databases.createDocument(databaseId, collectionId, ID.unique(), {
-                searchTerm,
+                searchTerm: movie.title,
+                title: movie.title,
+                release_date: movie.release_date,
                 count: 1,
                 movie_id: movie.id,
                 poster_url: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
@@ -54,19 +56,40 @@ export const getTrendingMovies = async () => {
     }
 };
 
-export const incrementMovieClickCount = async (tmdbMovieId) => {
+
+export const incrementMovieClickCount = async (tmdbMovieId, movie, newCount = 1) => {
     try {
         const response = await databases.listDocuments(databaseId, collectionId, [
-            Query.equal('movie_id', tmdbMovieId)
+            Query.equal('movie_id', tmdbMovieId),
         ]);
 
         if (response.documents.length > 0) {
+            // Document exists → overwrite its count with newCount
             const docToUpdate = response.documents[0];
-            await databases.updateDocument(databaseId, collectionId, docToUpdate.$id, {
-                count: docToUpdate.count + 1
-            });
+            await databases.updateDocument(
+                databaseId,
+                collectionId,
+                docToUpdate.$id,
+                { count: newCount }
+            );
+        } else {
+            // Document does not exist → create one with the supplied count
+            await databases.createDocument(
+                databaseId,
+                collectionId,
+                ID.unique(),
+                {
+                    searchTerm: movie.title, // or whatever you want to store
+                    count: newCount,
+                    movie_id: tmdbMovieId,
+                    poster_url: movie.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                        : '',
+                }
+            );
         }
     } catch (error) {
-        console.error('Error incrementing movie click count:', error);
+        console.error('Error updating movie click count:', error);
     }
 };
+

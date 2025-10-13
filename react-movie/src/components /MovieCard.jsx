@@ -1,28 +1,47 @@
-import React from 'react'
+import { Link } from 'react-router-dom';
 
-const MovieCard = ( {movie:
-    {title, vote_average, poster_path, release_date, original_language}
-} ) => {
+function MovieCard({ movie, onClick }) {
+    const {
+        id,
+        title,
+        vote_average,
+        poster_path,
+        release_date,
+        original_language,
+    } = movie;
+
     return (
-        <div className="movie-card" onClick={() => onClick(id)}>
-            <img src={ poster_path ? `https://image.tmdb.org/t/p/w500${poster_path}` :
-                './public/no-movie.png'} alt={title} />
+        <li>
+            <Link to={`/movie/${id}`} onClick={() => onClick && onClick()}>
+                <div className="movie-card">
+                    <img
+                        src={
+                            poster_path
+                                ? `https://image.tmdb.org/t/p/w500${poster_path}`
+                                : '/no-movie.png'
+                        }
+                        alt={title}
+                    />
 
-            <div className="mt-4">
-                <h3>{title}</h3>
-                <div className="content">
-                    <div className='rating'>
-                        <img src="./public/star.svg" alt="star" />
-                        <p>{vote_average ? vote_average.toFixed(1) : 'N/A'}</p>
+                    <div className="mt-4">
+                        <h3>{title}</h3>
+                        <div className="content">
+                            <div className="rating">
+                                <img src="/star.svg" alt="star" />
+                                <p>{vote_average ? vote_average.toFixed(1) : 'N/A'}</p>
+                            </div>
+                            <span>•</span>
+                            <p className="lang">{original_language}</p>
+                            <span>•</span>
+                            <p className="year">
+                                {release_date ? release_date.split('-')[0] : 'N/A'}
+                            </p>
+                        </div>
                     </div>
-                    <span> • </span>
-                    <p className='lang'>{original_language}</p>
-                    <span> • </span>
-                    <p className='year'>{release_date ? release_date.split('-')[0] : 'N/A'}</p>
-                    {/* .split('-')[0] only returns the first part of the date string, which is the year. */}
                 </div>
-            </div>
-        </div>
-    )
+            </Link>
+        </li>
+    );
 }
-export default MovieCard
+
+export default MovieCard;
